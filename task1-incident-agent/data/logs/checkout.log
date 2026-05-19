@@ -1,0 +1,37 @@
+2026-05-15T13:50:14Z INFO  checkout[2891]: shutdown_initiated signal=SIGTERM build=checkout-svc-2.4.0
+2026-05-15T13:50:48Z INFO  checkout[2891]: drained connections=0 exit
+2026-05-15T13:55:02Z INFO  checkout[3104]: starting build=checkout-svc-2.4.1 commit=a8f3c91 deploy_id=dep_77291
+2026-05-15T13:55:09Z INFO  checkout[3104]: HTTP server listening on :9090
+2026-05-15T13:55:11Z INFO  checkout[3104]: Redis pool initialized host=redis-cache-prod-01 pool_size=48
+2026-05-15T13:55:15Z INFO  checkout[3104]: session_cache_strategy=expanded_v2 keys_per_session=12 ttl_seconds=3600
+2026-05-15T13:55:21Z INFO  checkout[3104]: feature_flag enable_cart_recommendations=true rollout=100%
+2026-05-15T13:58:42Z INFO  checkout[3104]: cart_submitted cart_id=cart_3kL2m9 user_id=u_8821 items=3 total=8997
+2026-05-15T14:02:19Z INFO  checkout[3104]: cart_submitted cart_id=cart_3kL2n0 user_id=u_8822 items=1 total=2999
+2026-05-15T14:08:51Z INFO  checkout[3104]: cart_submitted cart_id=cart_3kL2n1 user_id=u_8823 items=5 total=12495
+2026-05-15T14:15:33Z INFO  checkout[3104]: cart_submitted cart_id=cart_3kL2n2 user_id=u_8824 items=2 total=4798
+2026-05-15T14:23:09Z WARN  checkout[3104]: redis_set_slow key=session:u_8825:cart took=389ms
+2026-05-15T14:26:44Z WARN  checkout[3104]: redis_set_slow key=session:u_8826:recommendations took=512ms
+2026-05-15T14:28:18Z WARN  checkout[3104]: redis_set_slow key=session:u_8827:recommendations took=841ms
+2026-05-15T14:30:02Z ERROR checkout[3104]: redis_oom_error key=session:u_8828:recommendations error=OOM command not allowed when used memory > maxmemory
+2026-05-15T14:30:48Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2n3 reason=session_write_failed
+2026-05-15T14:31:21Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2n4 reason=session_write_failed
+2026-05-15T14:32:09Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2n5 reason=downstream_payment_timeout
+2026-05-15T14:33:18Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2n6 reason=downstream_payment_timeout
+2026-05-15T14:33:51Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2n7 reason=downstream_payment_timeout
+2026-05-15T14:34:22Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2n8 reason=downstream_payment_timeout
+2026-05-15T14:35:08Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2n9 reason=downstream_payment_timeout
+2026-05-15T14:36:41Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2o0 reason=downstream_payment_timeout
+2026-05-15T14:39:17Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2o1 reason=downstream_payment_timeout
+2026-05-15T14:42:33Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2o2 reason=downstream_payment_timeout
+2026-05-15T14:46:09Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2o3 reason=downstream_payment_timeout
+2026-05-15T14:50:48Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2o4 reason=downstream_payment_timeout
+2026-05-15T14:55:11Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2o5 reason=downstream_payment_timeout
+2026-05-15T14:59:34Z ERROR checkout[3104]: cart_submit_failed cart_id=cart_3kL2o6 reason=downstream_payment_timeout
+2026-05-15T15:02:18Z INFO  checkout[3104]: rollback_initiated target_build=checkout-svc-2.4.0 deploy_id=dep_77293
+2026-05-15T15:02:51Z INFO  checkout[3104]: shutdown_initiated signal=SIGTERM
+2026-05-15T15:03:22Z INFO  checkout[3211]: starting build=checkout-svc-2.4.0 commit=b6e2d83 deploy_id=dep_77293
+2026-05-15T15:03:28Z INFO  checkout[3211]: HTTP server listening on :9090
+2026-05-15T15:03:31Z INFO  checkout[3211]: session_cache_strategy=standard keys_per_session=3 ttl_seconds=3600
+2026-05-15T15:08:14Z INFO  checkout[3211]: cart_submitted cart_id=cart_3kL2o7 user_id=u_8901 items=2 total=5998
+2026-05-15T15:11:42Z INFO  checkout[3211]: cart_submitted cart_id=cart_3kL2o8 user_id=u_8902 items=4 total=11196
+2026-05-15T15:14:19Z INFO  checkout[3211]: cart_submitted cart_id=cart_3kL2o9 user_id=u_8903 items=1 total=2999

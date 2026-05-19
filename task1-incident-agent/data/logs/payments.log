@@ -1,0 +1,45 @@
+2026-05-15T14:00:03Z INFO  payments[4218]: HTTP server listening on :8080, build=payments-svc-3.18.2
+2026-05-15T14:00:12Z INFO  payments[4218]: Redis pool initialized host=redis-cache-prod-01 pool_size=64
+2026-05-15T14:00:18Z INFO  payments[4218]: DB pool initialized host=db-orders-primary pool_size=200
+2026-05-15T14:02:45Z INFO  payments[4218]: charge_completed charge_id=ch_8aJk29 amount=2999 currency=USD latency_ms=187
+2026-05-15T14:05:11Z INFO  payments[4218]: charge_completed charge_id=ch_8aJk30 amount=4499 currency=USD latency_ms=205
+2026-05-15T14:08:22Z INFO  payments[4218]: charge_completed charge_id=ch_8aJk31 amount=1299 currency=USD latency_ms=193
+2026-05-15T14:12:09Z WARN  payments[4218]: slow_query orders.select_recent took=812ms threshold=500ms
+2026-05-15T14:15:34Z INFO  payments[4218]: charge_completed charge_id=ch_8aJk32 amount=8999 currency=USD latency_ms=224
+2026-05-15T14:22:18Z INFO  payments[4218]: charge_completed charge_id=ch_8aJk33 amount=599 currency=USD latency_ms=261
+2026-05-15T14:25:47Z WARN  payments[4218]: redis_get_slow key=session:idx:* took=412ms
+2026-05-15T14:27:09Z WARN  payments[4218]: redis_get_slow key=user:profile:* took=687ms
+2026-05-15T14:28:33Z WARN  payments[4218]: redis_get_slow key=fraud:rules:v3 took=921ms
+2026-05-15T14:29:18Z WARN  payments[4218]: redis_cache_miss key=fraud:rules:v3 fallback=db
+2026-05-15T14:29:51Z WARN  payments[4218]: redis_cache_miss key=fraud:rules:v3 fallback=db
+2026-05-15T14:30:12Z ERROR payments[4218]: redis_eviction_detected: cache hit ratio dropped 94%->41% over 60s window
+2026-05-15T14:30:47Z WARN  payments[4218]: db_pool_wait queue_depth=12 wait_ms=340
+2026-05-15T14:31:09Z WARN  payments[4218]: db_pool_wait queue_depth=28 wait_ms=812
+2026-05-15T14:31:38Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk41 reason=upstream_timeout downstream=fraud-svc latency_ms=2103
+2026-05-15T14:32:01Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk42 reason=db_pool_timeout latency_ms=2841
+2026-05-15T14:32:28Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk43 reason=db_pool_timeout latency_ms=2952
+2026-05-15T14:33:11Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk44 reason=db_pool_timeout latency_ms=3014
+2026-05-15T14:33:48Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk45 reason=db_pool_timeout latency_ms=3102
+2026-05-15T14:34:02Z ERROR payments[4218]: db_pool_exhausted active=200/200 wait_queue=47
+2026-05-15T14:34:39Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk46 reason=db_pool_exhausted
+2026-05-15T14:35:15Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk47 reason=db_pool_exhausted
+2026-05-15T14:35:52Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk48 reason=db_pool_exhausted
+2026-05-15T14:36:29Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk49 reason=db_pool_exhausted
+2026-05-15T14:37:04Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk50 reason=db_pool_exhausted
+2026-05-15T14:38:18Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk51 reason=db_pool_exhausted
+2026-05-15T14:39:51Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk52 reason=db_pool_exhausted
+2026-05-15T14:42:09Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk53 reason=db_pool_exhausted
+2026-05-15T14:45:34Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk54 reason=db_pool_exhausted
+2026-05-15T14:48:18Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk55 reason=db_pool_exhausted
+2026-05-15T14:51:43Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk56 reason=db_pool_exhausted
+2026-05-15T14:55:22Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk57 reason=db_pool_exhausted
+2026-05-15T14:58:48Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk58 reason=db_pool_exhausted
+2026-05-15T15:01:34Z ERROR payments[4218]: charge_failed charge_id=ch_8aJk59 reason=db_pool_exhausted
+2026-05-15T15:03:11Z WARN  payments[4218]: db_pool_recovering active=178/200
+2026-05-15T15:04:48Z WARN  payments[4218]: db_pool_recovering active=152/200
+2026-05-15T15:06:22Z INFO  payments[4218]: redis_cache_hit_ratio recovered to 89%
+2026-05-15T15:07:55Z INFO  payments[4218]: db_pool_healthy active=124/200
+2026-05-15T15:09:31Z INFO  payments[4218]: charge_completed charge_id=ch_8aJk60 amount=2199 currency=USD latency_ms=378
+2026-05-15T15:11:18Z INFO  payments[4218]: charge_completed charge_id=ch_8aJk61 amount=999 currency=USD latency_ms=251
+2026-05-15T15:13:44Z INFO  payments[4218]: charge_completed charge_id=ch_8aJk62 amount=4799 currency=USD latency_ms=237
+2026-05-15T15:15:09Z INFO  payments[4218]: charge_completed charge_id=ch_8aJk63 amount=1599 currency=USD latency_ms=219

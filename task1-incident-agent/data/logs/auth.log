@@ -1,0 +1,25 @@
+2026-05-15T14:00:01Z INFO  auth[7012]: HTTP server listening on :7070 build=auth-svc-1.9.4
+2026-05-15T14:00:08Z INFO  auth[7012]: Redis pool initialized host=redis-cache-prod-01 pool_size=32
+2026-05-15T14:03:18Z INFO  auth[7012]: session_created sid=sess_91kJ user_id=u_8821 ttl=3600
+2026-05-15T14:09:42Z INFO  auth[7012]: session_validated sid=sess_91kJ latency_ms=12
+2026-05-15T14:17:33Z INFO  auth[7012]: session_validated sid=sess_91kK latency_ms=14
+2026-05-15T14:25:11Z INFO  auth[7012]: session_validated sid=sess_91kL latency_ms=18
+2026-05-15T14:28:48Z WARN  auth[7012]: redis_get_slow key=sess:91kM took=287ms
+2026-05-15T14:31:22Z WARN  auth[7012]: redis_get_slow key=sess:91kN took=612ms
+2026-05-15T14:34:09Z ERROR auth[7012]: session_lookup_failed sid=sess_91kO error=key_not_found cause=likely_eviction
+2026-05-15T14:36:41Z ERROR auth[7012]: session_lookup_failed sid=sess_91kP error=key_not_found cause=likely_eviction
+2026-05-15T14:38:18Z ERROR auth[7012]: session_lookup_failed sid=sess_91kQ error=key_not_found cause=likely_eviction
+2026-05-15T14:40:33Z WARN  auth[7012]: session_lookup_failure_rate_high rate=2.8% baseline=0.1%
+2026-05-15T14:42:09Z ERROR auth[7012]: session_lookup_failed sid=sess_91kR error=key_not_found cause=likely_eviction
+2026-05-15T14:42:51Z WARN  auth[7012]: session_lookup_failure_rate_high rate=3.4% baseline=0.1%
+2026-05-15T14:45:18Z ERROR auth[7012]: session_lookup_failed sid=sess_91kS error=key_not_found cause=likely_eviction
+2026-05-15T14:48:42Z ERROR auth[7012]: session_lookup_failed sid=sess_91kT error=key_not_found cause=likely_eviction
+2026-05-15T14:52:11Z ERROR auth[7012]: session_lookup_failed sid=sess_91kU error=key_not_found cause=likely_eviction
+2026-05-15T14:55:38Z ERROR auth[7012]: session_lookup_failed sid=sess_91kV error=key_not_found cause=likely_eviction
+2026-05-15T14:58:22Z ERROR auth[7012]: session_lookup_failed sid=sess_91kW error=key_not_found cause=likely_eviction
+2026-05-15T15:01:51Z ERROR auth[7012]: session_lookup_failed sid=sess_91kX error=key_not_found cause=likely_eviction
+2026-05-15T15:04:18Z WARN  auth[7012]: session_lookup_failure_rate_high rate=2.1% baseline=0.1%
+2026-05-15T15:06:42Z WARN  auth[7012]: session_lookup_failure_rate_recovering rate=0.9% baseline=0.1%
+2026-05-15T15:08:33Z INFO  auth[7012]: session_lookup_failure_rate_normal rate=0.2%
+2026-05-15T15:10:51Z INFO  auth[7012]: session_validated sid=sess_91kY latency_ms=15
+2026-05-15T15:14:18Z INFO  auth[7012]: session_validated sid=sess_91kZ latency_ms=11

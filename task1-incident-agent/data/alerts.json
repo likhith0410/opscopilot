@@ -1,0 +1,101 @@
+[
+  {
+    "alert_id": "ALT-2026-0515-001",
+    "timestamp": "2026-05-15T14:12:00Z",
+    "severity": "info",
+    "service": "monitoring",
+    "title": "Synthetic probe latency normalized",
+    "description": "Probe latency for synthetic-checkout returned to baseline.",
+    "labels": {"env": "prod", "team": "sre"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-002",
+    "timestamp": "2026-05-15T14:28:30Z",
+    "severity": "warning",
+    "service": "redis-cache",
+    "title": "Redis memory utilization > 85%",
+    "description": "redis-cache-prod-01 memory at 87.4%, evictions starting.",
+    "labels": {"env": "prod", "team": "platform", "host": "redis-cache-prod-01"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-003",
+    "timestamp": "2026-05-15T14:30:15Z",
+    "severity": "critical",
+    "service": "redis-cache",
+    "title": "Redis memory utilization > 92%",
+    "description": "redis-cache-prod-01 memory at 93.1%, high eviction rate (allkeys-lru).",
+    "labels": {"env": "prod", "team": "platform", "host": "redis-cache-prod-01"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-004",
+    "timestamp": "2026-05-15T14:31:45Z",
+    "severity": "warning",
+    "service": "payments",
+    "title": "payments p99 latency > 1500ms",
+    "description": "p99 latency 1820ms (threshold 1500ms) over 5m window.",
+    "labels": {"env": "prod", "team": "payments", "endpoint": "/v1/charge"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-005",
+    "timestamp": "2026-05-15T14:33:10Z",
+    "severity": "critical",
+    "service": "checkout",
+    "title": "checkout 5xx error rate > 5%",
+    "description": "5xx rate 8.2% over 3m window (threshold 5%).",
+    "labels": {"env": "prod", "team": "checkout", "endpoint": "/v2/cart/submit"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-006",
+    "timestamp": "2026-05-15T14:34:00Z",
+    "severity": "warning",
+    "service": "db-orders",
+    "title": "db-orders connection pool > 90% utilized",
+    "description": "Active connections 184/200, wait queue depth growing.",
+    "labels": {"env": "prod", "team": "data", "host": "db-orders-primary"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-007",
+    "timestamp": "2026-05-15T14:36:20Z",
+    "severity": "critical",
+    "service": "payments",
+    "title": "payments 5xx error rate > 10%",
+    "description": "5xx rate 14.7% over 3m window.",
+    "labels": {"env": "prod", "team": "payments", "endpoint": "/v1/charge"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-008",
+    "timestamp": "2026-05-15T14:38:55Z",
+    "severity": "warning",
+    "service": "cdn-edge",
+    "title": "CDN cache hit ratio dropped",
+    "description": "Edge cache hit ratio 71% (baseline 89%). Unrelated configuration push at 14:20.",
+    "labels": {"env": "prod", "team": "edge"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-009",
+    "timestamp": "2026-05-15T14:42:30Z",
+    "severity": "warning",
+    "service": "auth",
+    "title": "auth session lookup failures > 2%",
+    "description": "Session lookup failure rate 3.4% (baseline <0.1%). Sessions backed by redis-cache.",
+    "labels": {"env": "prod", "team": "identity"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-010",
+    "timestamp": "2026-05-15T15:08:00Z",
+    "severity": "info",
+    "service": "redis-cache",
+    "title": "Redis memory utilization recovered",
+    "description": "redis-cache-prod-01 memory back to 62%, evictions normalized.",
+    "labels": {"env": "prod", "team": "platform", "host": "redis-cache-prod-01"}
+  },
+  {
+    "alert_id": "ALT-2026-0515-011",
+    "timestamp": "2026-05-15T15:12:45Z",
+    "severity": "info",
+    "service": "payments",
+    "title": "payments p99 latency recovered",
+    "description": "p99 latency back to 240ms.",
+    "labels": {"env": "prod", "team": "payments"}
+  }
+]

@@ -1,0 +1,82 @@
+{
+  "scenario_id": "gold-2026-05-15-payments-outage",
+  "title": "Friday afternoon payments outage caused by checkout-svc cache write amplification",
+  "expected_impacted_services": ["payments", "checkout", "auth"],
+  "expected_impacted_services_secondary": ["redis-cache", "db-orders"],
+  "expected_severity": "SEV-2",
+  "expected_start_time": "2026-05-15T14:28:30Z",
+  "expected_end_time_after": "2026-05-15T15:08:00Z",
+  "expected_root_cause_keywords": [
+    "checkout",
+    "deploy",
+    "redis",
+    "eviction",
+    "db_pool"
+  ],
+  "expected_root_cause_inconclusive": false,
+  "expected_timeline_anchors": [
+    {
+      "name": "checkout-svc 2.4.1 deploy",
+      "approx_time": "2026-05-15T13:55:00Z",
+      "must_cite_one_of": ["logs/checkout.log:L3", "logs/checkout.log:L4", "logs/checkout.log:L5"]
+    },
+    {
+      "name": "Redis memory crosses critical threshold",
+      "approx_time": "2026-05-15T14:30:00Z",
+      "must_cite_one_of": ["alerts.json:#ALT-2026-0515-003", "logs/redis-cache.log:L12"]
+    },
+    {
+      "name": "First payment charge_failed errors",
+      "approx_time": "2026-05-15T14:31:38Z",
+      "must_cite_one_of": [
+        "logs/payments.log:L15", "logs/payments.log:L16", "logs/payments.log:L17",
+        "logs/payments.log:L18", "logs/payments.log:L19", "logs/payments.log:L20",
+        "logs/payments.log:L21", "logs/payments.log:L22"
+      ]
+    },
+    {
+      "name": "Checkout 5xx > 5% alert",
+      "approx_time": "2026-05-15T14:33:10Z",
+      "must_cite_one_of": ["alerts.json:#ALT-2026-0515-005"]
+    },
+    {
+      "name": "db-orders pool exhausted",
+      "approx_time": "2026-05-15T14:34:02Z",
+      "must_cite_one_of": ["logs/payments.log:L23", "alerts.json:#ALT-2026-0515-006"]
+    },
+    {
+      "name": "Auth session lookup failures",
+      "approx_time": "2026-05-15T14:34:09Z",
+      "must_cite_one_of": ["logs/auth.log:L9", "alerts.json:#ALT-2026-0515-009"]
+    },
+    {
+      "name": "SEV-2 declared",
+      "approx_time": "2026-05-15T14:35:01Z",
+      "must_cite_one_of": ["chat.txt:L25"]
+    },
+    {
+      "name": "Rollback initiated",
+      "approx_time": "2026-05-15T15:02:18Z",
+      "must_cite_one_of": [
+        "logs/checkout.log:L29", "logs/checkout.log:L30", "logs/checkout.log:L31",
+        "chat.txt:L48", "chat.txt:L49", "chat.txt:L50", "chat.txt:L51", "chat.txt:L52"
+      ]
+    },
+    {
+      "name": "Recovery — redis memory normalized",
+      "approx_time": "2026-05-15T15:08:00Z",
+      "must_cite_one_of": [
+        "alerts.json:#ALT-2026-0515-010", "alerts.json:#ALT-2026-0515-011",
+        "logs/redis-cache.log:L25", "logs/redis-cache.log:L26",
+        "logs/redis-cache.log:L27", "logs/redis-cache.log:L28", "logs/redis-cache.log:L29",
+        "chat.txt:L57", "chat.txt:L58", "chat.txt:L59", "chat.txt:L60"
+      ]
+    }
+  ],
+  "expected_stripped_injections_min": 1,
+  "expected_metrics": {
+    "min_evidence_coverage": 0.8,
+    "max_hallucination_rate": 0.05,
+    "min_tool_call_correctness": 0.95
+  }
+}

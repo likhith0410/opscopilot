@@ -1,0 +1,30 @@
+2026-05-15T14:00:00Z INFO  redis[918]: Memory usage: used=4.96GB max=8.00GB (62.0%) clients=287
+2026-05-15T14:05:00Z INFO  redis[918]: Memory usage: used=5.22GB max=8.00GB (65.3%) clients=291
+2026-05-15T14:10:00Z INFO  redis[918]: Memory usage: used=5.55GB max=8.00GB (69.4%) clients=294
+2026-05-15T14:15:00Z INFO  redis[918]: Memory usage: used=5.90GB max=8.00GB (73.8%) clients=298
+2026-05-15T14:20:00Z INFO  redis[918]: Memory usage: used=6.25GB max=8.00GB (78.1%) clients=302
+2026-05-15T14:25:00Z WARN  redis[918]: Memory usage: used=6.61GB max=8.00GB (82.6%) clients=304
+2026-05-15T14:28:00Z WARN  redis[918]: Memory usage crossed 85% threshold: used=6.83GB max=8.00GB (85.4%)
+2026-05-15T14:28:01Z WARN  redis[918]: maxmemory-policy=allkeys-lru active, beginning evictions
+2026-05-15T14:28:14Z WARN  redis[918]: Evicted 14782 keys in last 10s (avg 1478/s)
+2026-05-15T14:28:48Z WARN  redis[918]: Evicted 22341 keys in last 10s (avg 2234/s)
+2026-05-15T14:29:30Z WARN  redis[918]: Memory usage: used=6.98GB max=8.00GB (87.2%)
+2026-05-15T14:30:00Z ERROR redis[918]: Memory usage critical: used=7.45GB max=8.00GB (93.1%)
+2026-05-15T14:30:08Z ERROR redis[918]: Evicted 38912 keys in last 10s (avg 3891/s) - high pressure
+2026-05-15T14:30:14Z ERROR redis[918]: OOM command not allowed when used memory > maxmemory client=10.4.18.91:48211 cmd=SET key=session:u_8828:recommendations
+2026-05-15T14:30:48Z ERROR redis[918]: OOM command not allowed when used memory > maxmemory client=10.4.18.91:48214 cmd=SET key=session:u_8829:recommendations
+2026-05-15T14:31:12Z WARN  redis[918]: Cache hit ratio dropped: 94.2% -> 41.8% over 60s window
+2026-05-15T14:32:00Z ERROR redis[918]: Memory usage: used=7.58GB max=8.00GB (94.8%) - sustained pressure
+2026-05-15T14:35:00Z ERROR redis[918]: Memory usage: used=7.66GB max=8.00GB (95.7%) clients=311
+2026-05-15T14:40:00Z ERROR redis[918]: Memory usage: used=7.71GB max=8.00GB (96.4%) clients=314
+2026-05-15T14:45:00Z ERROR redis[918]: Memory usage: used=7.73GB max=8.00GB (96.6%) clients=316
+2026-05-15T14:50:00Z ERROR redis[918]: Memory usage: used=7.74GB max=8.00GB (96.8%) clients=318
+2026-05-15T15:00:00Z ERROR redis[918]: Memory usage: used=7.77GB max=8.00GB (97.1%) clients=320
+2026-05-15T15:02:48Z INFO  redis[918]: Client disconnects detected: -42 clients (checkout-svc rolling restart)
+2026-05-15T15:03:21Z INFO  redis[918]: Memory usage decreasing: used=7.66GB max=8.00GB (95.8%) clients=278
+2026-05-15T15:04:18Z INFO  redis[918]: Memory usage decreasing: used=7.46GB max=8.00GB (93.2%) clients=276
+2026-05-15T15:06:00Z INFO  redis[918]: Memory usage: used=6.78GB max=8.00GB (84.7%) clients=274
+2026-05-15T15:08:00Z INFO  redis[918]: Memory usage normalized: used=5.72GB max=8.00GB (71.5%) clients=275
+2026-05-15T15:08:14Z INFO  redis[918]: Eviction rate normalized: 12 keys/s
+2026-05-15T15:08:42Z INFO  redis[918]: Cache hit ratio recovered: 89.4%
+2026-05-15T15:15:00Z INFO  redis[918]: Memory usage: used=4.96GB max=8.00GB (62.0%) clients=276
