@@ -113,32 +113,26 @@
     },
     {
       "parameters": {
-        "operation": "lookup",
+        "operation": "read",
         "documentId": { "__rl": true, "mode": "id", "value": "={{ $env.SHEETS_DOC_ID }}" },
         "sheetName": { "__rl": true, "mode": "name", "value": "Leads" },
-        "filtersUI": {
-          "values": [
-            { "lookupColumn": "idempotency_key", "lookupValue": "={{ $json.idempotency_key }}" }
-          ]
-        },
-        "options": { "returnAllMatches": false }
+        "options": {}
       },
-      "id": "lookup-existing",
-      "name": "Sheets: Lookup by Idempotency Key",
+      "id": "read-all-leads",
+      "name": "Sheets: Read All Leads",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [1380, 280],
       "credentials": { "googleSheetsOAuth2Api": { "id": "GSHEETS_CRED", "name": "Google Sheets account" } },
-      "alwaysOutputData": true,
-      "onError": "continueRegularOutput"
+      "alwaysOutputData": true
     },
     {
       "parameters": {
         "language": "javaScript",
-        "jsCode": "// Merge lead with lookup result. Sheets 'lookup' returns the matched row (with row_number)\n// or nothing when there's no match.\nconst lead = $('Compute Idempotency Key').first().json;\nconst lookup = $input.all();\nconst found = lookup.length > 0 && lookup[0].json && lookup[0].json.idempotency_key;\nreturn [{\n  json: {\n    ...lead,\n    duplicate: Boolean(found),\n    existing_row_number: found ? (lookup[0].json.row_number ?? null) : null\n  }\n}];"
+        "jsCode": "// Idempotency check: scan all existing rows for the computed key.\n// Reading all rows + scanning here is version-independent (no reliance on the\n// Sheets node's filter feature) and trivially fast at assignment scale.\nconst lead = $('Compute Idempotency Key').first().json;\nconst rows = $input.all().map(i => i.json).filter(r => r && r.idempotency_key);\nconst match = rows.find(r => String(r.idempotency_key) === String(lead.idempotency_key));\nreturn [{\n  json: {\n    ...lead,\n    duplicate: Boolean(match),\n    existing_row_number: match ? (match.row_number ?? null) : null\n  }\n}];"
       },
-      "id": "merge-lookup",
-      "name": "Merge Lookup Result",
+      "id": "check-duplicate",
+      "name": "Check Duplicate",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1620, 280]
@@ -248,25 +242,30 @@
     },
     {
       "parameters": {
-        "authentication": "webhook",
-        "messageType": "block",
-        "blocksUi": "={{ JSON.stringify({ blocks: [ { type: 'header', text: { type: 'plain_text', text: '🚨 High-Urgency Lead', emoji: true } }, { type: 'section', fields: [ { type: 'mrkdwn', text: '*Name:*\\n' + $json.name }, { type: 'mrkdwn', text: '*Email:*\\n' + $json.email }, { type: 'mrkdwn', text: '*Company:*\\n' + $json.company + ' (' + $json.company_source + ')' }, { type: 'mrkdwn', text: '*Product:*\\n' + $json.product } ] }, { type: 'section', text: { type: 'mrkdwn', text: '*Message:*\\n' + $json.message } }, { type: 'context', elements: [ { type: 'mrkdwn', text: 'idempotency_key: `' + $json.idempotency_key + '`' } ] } ] }) }}",
-        "otherOptions": {}
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: ':rotating_light: *HIGH-URGENCY LEAD*\\n*From:* ' + $json.name + ' (' + $json.email + ')\\n*Company:* ' + $json.company + ' (' + $json.company_source + ')\\n*Product:* ' + $json.product + '\\n*Message:* ' + $json.message + '\\n_key:_ ' + $json.idempotency_key }) }}",
+        "options": {}
       },
       "id": "slack-alert",
       "name": "Slack: High-Urgency Alert",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.3,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [2580, 280],
-      "credentials": { "slackApi": { "id": "SLACK_CRED", "name": "Slack account" } },
       "retryOnFail": true,
       "maxTries": 3
     },
     {
       "parameters": {
+        "resource": "card",
+        "operation": "create",
+        "listId": "={{ $env.TRELLO_LIST_ID }}",
         "name": "=[HIGH] {{ $json.product }} — {{ $json.name }} @ {{ $json.company }}",
-        "description": "=*Customer:* {{ $json.name }} ({{ $json.email }})\n*Company:* {{ $json.company }} ({{ $json.company_source }})\n*Product:* {{ $json.product }}\n*Urgency:* {{ $json.urgency }}\n*Received:* {{ $json.received_at }}\n\n*Message:*\n{{ $json.message }}\n\n---\nidempotency_key: {{ $json.idempotency_key }}",
-        "additionalFields": { "idListId": "={{ $env.TRELLO_LIST_ID }}" }
+        "additionalFields": {
+          "description": "=*Customer:* {{ $json.name }} ({{ $json.email }})\n*Company:* {{ $json.company }} ({{ $json.company_source }})\n*Product:* {{ $json.product }}\n*Urgency:* {{ $json.urgency }}\n*Received:* {{ $json.received_at }}\n\n*Message:*\n{{ $json.message }}\n\n---\nidempotency_key: {{ $json.idempotency_key }}"
+        }
       },
       "id": "trello-create",
       "name": "Trello: Create Card",
@@ -297,7 +296,7 @@
     },
     {
       "parameters": {
-        "operation": "update",
+        "operation": "appendOrUpdate",
         "documentId": { "__rl": true, "mode": "id", "value": "={{ $env.SHEETS_DOC_ID }}" },
         "sheetName": { "__rl": true, "mode": "name", "value": "Leads" },
         "columns": {
@@ -323,7 +322,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"status\": \"accepted\", \"urgency\": $('Merge Lookup Result').item.json.urgency, \"idempotency_key\": $('Merge Lookup Result').item.json.idempotency_key } }}",
+        "responseBody": "={{ { \"status\": \"accepted\", \"urgency\": $('Check Duplicate').item.json.urgency, \"idempotency_key\": $('Check Duplicate').item.json.idempotency_key } }}",
         "options": { "responseCode": 200 }
       },
       "id": "respond-200",
@@ -344,9 +343,9 @@
     },
     "DeadLetter: Validation Failure": { "main": [[{ "node": "Respond 400 (Invalid)", "type": "main", "index": 0 }]] },
     "Enrich Lead": { "main": [[{ "node": "Compute Idempotency Key", "type": "main", "index": 0 }]] },
-    "Compute Idempotency Key": { "main": [[{ "node": "Sheets: Lookup by Idempotency Key", "type": "main", "index": 0 }]] },
-    "Sheets: Lookup by Idempotency Key": { "main": [[{ "node": "Merge Lookup Result", "type": "main", "index": 0 }]] },
-    "Merge Lookup Result": { "main": [[{ "node": "IF: Duplicate?", "type": "main", "index": 0 }]] },
+    "Compute Idempotency Key": { "main": [[{ "node": "Sheets: Read All Leads", "type": "main", "index": 0 }]] },
+    "Sheets: Read All Leads": { "main": [[{ "node": "Check Duplicate", "type": "main", "index": 0 }]] },
+    "Check Duplicate": { "main": [[{ "node": "IF: Duplicate?", "type": "main", "index": 0 }]] },
     "IF: Duplicate?": {
       "main": [
         [{ "node": "Respond 200 (Duplicate)", "type": "main", "index": 0 }],

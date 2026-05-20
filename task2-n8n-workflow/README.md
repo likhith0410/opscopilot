@@ -96,9 +96,9 @@ Open **http://localhost:5678** and create the owner account (local only).
 ### 3. Slack
 
 1. Create an [incoming webhook](https://api.slack.com/messaging/webhooks) for your target channel (e.g. `#leads`).
-2. In n8n: **Credentials → New → Slack API**, choose **Webhook** authentication, paste the webhook URL. Name it **`Slack account`**.
+2. Paste the webhook URL (`https://hooks.slack.com/services/...`) into `.env` as `SLACK_WEBHOOK_URL`.
 
-   > The workflow uses Block Kit messages; the incoming-webhook credential renders them fine.
+   > Slack alerts + the digest are sent via a plain **HTTP Request** node posting `{ "text": ... }` to this webhook. No n8n Slack credential needed — this is version-independent and the simplest possible setup.
 
 ### 4. Trello
 
@@ -183,9 +183,15 @@ override with `WEBHOOK_URL`):
 - **Requests 2 & 3** → `200 duplicate` with the same `idempotency_key`, **no new rows**.
 
 The key is `sha256(lower(email) | product | UTC-date)[:32]`, computed in the
-*Compute Idempotency Key* node. Before appending, *Sheets: Lookup by Idempotency
-Key* checks for an existing row; *IF: Duplicate?* short-circuits to a duplicate
-response. Result: replays within the same day collapse to a single stored record.
+*Compute Idempotency Key* node. Before appending, *Sheets: Read All Leads* +
+*Check Duplicate* scan for an existing row with that key; *IF: Duplicate?*
+short-circuits to a duplicate response. Result: replays within the same day
+collapse to a single stored record.
+
+> Note: the duplicate check + append are not a single atomic transaction, so 3
+> *simultaneous* replays could theoretically race. The sample scripts send
+> requests sequentially (the documented demo), which is the realistic
+> webhook-retry pattern and stores exactly one row.
 
 ### Dead-letter / failure demo
 
@@ -223,9 +229,11 @@ Env vars (in `.env`, surfaced to workflows as `$env.*`):
 | `SHEETS_DOC_ID` | all Sheets nodes | `1A2b3C...` |
 | `TRELLO_LIST_ID` | Trello card node | `665f...` |
 | `SMTP_FROM_EMAIL` | confirmation email | `support@yourdomain.com` |
+| `SLACK_WEBHOOK_URL` | Slack alert + digest | `https://hooks.slack.com/services/...` |
 
 Credential names the workflows expect (create these in n8n):
-`Google Sheets account`, `Slack account`, `Trello account`, `SMTP account`.
+`Google Sheets account`, `Trello account`, `SMTP account`.
+(Slack uses the `SLACK_WEBHOOK_URL` env var via an HTTP Request node — no n8n credential needed.)
 
 ---
 

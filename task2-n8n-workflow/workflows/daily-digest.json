@@ -43,27 +43,28 @@
     {
       "parameters": {
         "language": "javaScript",
-        "jsCode": "// Format the digest into Slack Block Kit JSON.\nconst d = $json;\nconst urgencyLines = Object.entries(d.by_urgency).map(([k, v]) => `• ${k}: *${v}*`).join('\\n') || '_none_';\nconst productLines = Object.entries(d.by_product).map(([k, v]) => `• ${k}: *${v}*`).join('\\n') || '_none_';\nconst top5Lines = d.top5_recent.length\n  ? d.top5_recent.map((r, i) => `${i + 1}. *${r.name}* (${r.company}) — ${r.product} [${r.urgency}]`).join('\\n')\n  : '_no leads today_';\n\nconst blocks = [\n  { type: 'header', text: { type: 'plain_text', text: `📊 Daily Lead Digest — ${d.date}`, emoji: true } },\n  { type: 'section', text: { type: 'mrkdwn', text: `*Total leads today:* ${d.total_today}` } },\n  { type: 'section', fields: [\n    { type: 'mrkdwn', text: `*By urgency:*\\n${urgencyLines}` },\n    { type: 'mrkdwn', text: `*By product:*\\n${productLines}` }\n  ] },\n  { type: 'section', text: { type: 'mrkdwn', text: `*Top 5 recent:*\\n${top5Lines}` } }\n];\n\nreturn [{ json: { blocks_json: JSON.stringify({ blocks }) } }];"
+        "jsCode": "// Format the digest into a Slack mrkdwn text block.\nconst d = $json;\nconst urgencyLines = Object.entries(d.by_urgency).map(([k, v]) => `• ${k}: ${v}`).join('\\n') || '• (none)';\nconst productLines = Object.entries(d.by_product).map(([k, v]) => `• ${k}: ${v}`).join('\\n') || '• (none)';\nconst top5Lines = d.top5_recent.length\n  ? d.top5_recent.map((r, i) => `${i + 1}. ${r.name} (${r.company}) — ${r.product} [${r.urgency}]`).join('\\n')\n  : '(no leads today)';\n\nconst text = [\n  `:bar_chart: *Daily Lead Digest — ${d.date}*`,\n  `*Total leads today:* ${d.total_today}`,\n  ``,\n  `*By urgency:*\\n${urgencyLines}`,\n  ``,\n  `*By product:*\\n${productLines}`,\n  ``,\n  `*Top 5 recent:*\\n${top5Lines}`\n].join('\\n');\n\nreturn [{ json: { text } }];"
       },
       "id": "format-digest",
-      "name": "Format Digest Blocks",
+      "name": "Format Digest Text",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [920, 400]
     },
     {
       "parameters": {
-        "authentication": "webhook",
-        "messageType": "block",
-        "blocksUi": "={{ $json.blocks_json }}",
-        "otherOptions": {}
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.text }) }}",
+        "options": {}
       },
       "id": "slack-digest",
       "name": "Slack: Post Digest",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.3,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [1160, 400],
-      "credentials": { "slackApi": { "id": "SLACK_CRED", "name": "Slack account" } },
       "retryOnFail": true,
       "maxTries": 3
     }
@@ -71,8 +72,8 @@
   "connections": {
     "Schedule: 18:00 Daily": { "main": [[{ "node": "Sheets: Read All Leads", "type": "main", "index": 0 }]] },
     "Sheets: Read All Leads": { "main": [[{ "node": "Aggregate Digest", "type": "main", "index": 0 }]] },
-    "Aggregate Digest": { "main": [[{ "node": "Format Digest Blocks", "type": "main", "index": 0 }]] },
-    "Format Digest Blocks": { "main": [[{ "node": "Slack: Post Digest", "type": "main", "index": 0 }]] }
+    "Aggregate Digest": { "main": [[{ "node": "Format Digest Text", "type": "main", "index": 0 }]] },
+    "Format Digest Text": { "main": [[{ "node": "Slack: Post Digest", "type": "main", "index": 0 }]] }
   },
   "active": false,
   "settings": { "executionOrder": "v1", "saveManualExecutions": true },

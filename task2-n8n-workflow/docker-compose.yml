@@ -23,6 +23,7 @@ services:
       - SHEETS_DOC_ID=${SHEETS_DOC_ID:-}
       - TRELLO_LIST_ID=${TRELLO_LIST_ID:-}
       - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
     volumes:
       - n8n_data:/home/node/.n8n
 
