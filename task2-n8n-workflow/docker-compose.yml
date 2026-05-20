@@ -19,6 +19,10 @@ services:
       - GENERIC_TIMEZONE=Asia/Kolkata
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_RUNNERS_ENABLED=true
+      # allow the built-in crypto module in Code nodes (idempotency key hashing)
+      - NODE_FUNCTION_ALLOW_BUILTIN=crypto
+      # allow workflow expressions to read $env.* (SHEETS_DOC_ID, TRELLO_LIST_ID, etc.)
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       # --- env vars consumed by the workflow expressions ---
       - SHEETS_DOC_ID=${SHEETS_DOC_ID:-}
       - TRELLO_LIST_ID=${TRELLO_LIST_ID:-}

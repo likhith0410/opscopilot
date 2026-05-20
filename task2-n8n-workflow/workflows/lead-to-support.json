@@ -262,9 +262,9 @@
         "resource": "card",
         "operation": "create",
         "listId": "={{ $env.TRELLO_LIST_ID }}",
-        "name": "=[HIGH] {{ $json.product }} — {{ $json.name }} @ {{ $json.company }}",
+        "name": "=[HIGH] {{ $('Check Duplicate').item.json.product }} — {{ $('Check Duplicate').item.json.name }} @ {{ $('Check Duplicate').item.json.company }}",
         "additionalFields": {
-          "description": "=*Customer:* {{ $json.name }} ({{ $json.email }})\n*Company:* {{ $json.company }} ({{ $json.company_source }})\n*Product:* {{ $json.product }}\n*Urgency:* {{ $json.urgency }}\n*Received:* {{ $json.received_at }}\n\n*Message:*\n{{ $json.message }}\n\n---\nidempotency_key: {{ $json.idempotency_key }}"
+          "description": "=*Customer:* {{ $('Check Duplicate').item.json.name }} ({{ $('Check Duplicate').item.json.email }})\n*Company:* {{ $('Check Duplicate').item.json.company }} ({{ $('Check Duplicate').item.json.company_source }})\n*Product:* {{ $('Check Duplicate').item.json.product }}\n*Urgency:* {{ $('Check Duplicate').item.json.urgency }}\n*Received:* {{ $('Check Duplicate').item.json.received_at }}\n\n*Message:*\n{{ $('Check Duplicate').item.json.message }}\n\n---\nidempotency_key: {{ $('Check Duplicate').item.json.idempotency_key }}"
         }
       },
       "id": "trello-create",
