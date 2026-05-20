@@ -1,0 +1,30 @@
+# Local n8n for the opscopilot Lead-to-Support workflow.
+#   docker compose up -d        # start n8n at http://localhost:5678
+#   docker compose down         # stop (data persists in the named volume)
+#
+# Env vars referenced by the workflows (SHEETS_DOC_ID, TRELLO_LIST_ID,
+# SMTP_FROM_EMAIL) are passed through here from your shell or a .env file
+# placed next to this docker-compose.yml.
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Asia/Kolkata
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_RUNNERS_ENABLED=true
+      # --- env vars consumed by the workflow expressions ---
+      - SHEETS_DOC_ID=${SHEETS_DOC_ID:-}
+      - TRELLO_LIST_ID=${TRELLO_LIST_ID:-}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL:-}
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:

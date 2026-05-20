@@ -1,0 +1,8 @@
+{
+  "name": "Priya Sharma",
+  "email": "priya.sharma@acme-corp.com",
+  "company": "Acme Corp",
+  "message": "Our checkout integration is throwing 500s in production and we have a launch on Friday. Need urgent help.",
+  "urgency": "high",
+  "product": "Checkout API"
+}

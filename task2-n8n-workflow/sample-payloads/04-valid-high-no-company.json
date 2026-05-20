@@ -1,0 +1,7 @@
+{
+  "name": "Rahul Verma",
+  "email": "rahul.verma@fintech-labs.com",
+  "message": "Payment webhooks stopped firing 20 minutes ago across our entire platform. This is customer-impacting. Please escalate.",
+  "urgency": "high",
+  "product": "Webhooks"
+}

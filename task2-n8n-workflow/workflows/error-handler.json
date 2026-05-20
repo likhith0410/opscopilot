@@ -1,0 +1,63 @@
+{
+  "name": "opscopilot-error-handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [220, 400]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Normalize the error payload n8n hands to an Error Trigger into a flat\n// dead-letter row. Captures the failed node, message, and original lead data\n// when available.\nconst e = $json;\nconst exec = e.execution || {};\nconst lastNode = (exec.lastNodeExecuted) || 'unknown';\nconst errMsg = (e.error && (e.error.message || e.error.description)) || exec.error?.message || 'unknown error';\n\n// best-effort recovery of the original lead payload from the trigger data\nlet lead = {};\ntry {\n  const triggerData = e.execution?.data?.resultData?.runData;\n  // not always available; fall back to empty\n} catch (_) {}\n\nreturn [{\n  json: {\n    failed_at: new Date().toISOString(),\n    workflow: e.workflow?.name || 'unknown',\n    failed_node: lastNode,\n    error_reason: String(errMsg).slice(0, 500),\n    execution_id: exec.id || '',\n    execution_url: exec.url || '',\n    stage: 'runtime-error'\n  }\n}];"
+      },
+      "id": "shape-error",
+      "name": "Shape Error Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "id", "value": "={{ $env.SHEETS_DOC_ID }}" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "DeadLetter" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "received_at": "={{ $json.failed_at }}",
+            "name": "={{ '(runtime failure in ' + $json.workflow + ')' }}",
+            "email": "",
+            "company": "",
+            "product": "",
+            "urgency": "",
+            "message": "={{ 'failed_node=' + $json.failed_node + ' execution_id=' + $json.execution_id }}",
+            "error_reason": "={{ $json.error_reason }}",
+            "stage": "={{ $json.stage }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "deadletter-runtime",
+      "name": "DeadLetter: Runtime Error",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [700, 400],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "GSHEETS_CRED", "name": "Google Sheets account" } },
+      "retryOnFail": true,
+      "maxTries": 3
+    }
+  ],
+  "connections": {
+    "Error Trigger": { "main": [[{ "node": "Shape Error Row", "type": "main", "index": 0 }]] },
+    "Shape Error Row": { "main": [[{ "node": "DeadLetter: Runtime Error", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "opscopilot" }, { "name": "error-handler" }]
+}

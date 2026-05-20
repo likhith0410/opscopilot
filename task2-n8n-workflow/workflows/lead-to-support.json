@@ -1,0 +1,377 @@
+{
+  "name": "opscopilot — Lead to Support",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-intake",
+      "name": "Webhook: Lead Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 400],
+      "webhookId": "lead-intake"
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Validation + lightweight spam detection.\n// Required: name, email, message, urgency, product.  company is optional.\nconst input = $json.body ?? $json;\n\nconst REQUIRED = ['name', 'email', 'message', 'urgency', 'product'];\nconst missing = REQUIRED.filter(f => !input[f] || String(input[f]).trim() === '');\n\nconst emailRe = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst emailOk = input.email && emailRe.test(String(input.email).trim());\n\nconst urgencyOk = ['high', 'normal'].includes(String(input.urgency || '').toLowerCase());\n\nconst SPAM_KEYWORDS = ['viagra', 'crypto pump', 'guaranteed roi', 'click here to win', 'bit.ly', 'free money', 'wire transfer', 'forex signals'];\nconst messageLower = String(input.message || '').toLowerCase();\nconst spamHits = SPAM_KEYWORDS.filter(k => messageLower.includes(k));\nconst tooManyLinks = (messageLower.match(/https?:\\/\\//g) || []).length > 2;\nconst allCaps = input.message && input.message.length > 20 && input.message === String(input.message).toUpperCase();\nconst suspiciousTLD = /\\.(ru|tk|ml|cn|xyz)$/i.test(String(input.email || ''));\n\nconst isSpam = spamHits.length > 0 || tooManyLinks || allCaps || suspiciousTLD;\n\nconst errors = [];\nif (missing.length) errors.push(`missing fields: ${missing.join(', ')}`);\nif (!emailOk) errors.push('email is malformed');\nif (!urgencyOk) errors.push('urgency must be \"high\" or \"normal\"');\nif (isSpam) errors.push(`spam-like content (keywords: ${spamHits.join('|') || 'none'}, links>2: ${tooManyLinks}, all-caps: ${allCaps}, suspicious-tld: ${suspiciousTLD})`);\n\nconst valid = errors.length === 0;\n\nreturn [{\n  json: {\n    name: input.name,\n    email: input.email,\n    company: input.company || '',\n    message: input.message,\n    urgency: String(input.urgency || '').toLowerCase(),\n    product: input.product,\n    valid,\n    errors,\n    received_at: new Date().toISOString(),\n    spam_signals: { spamHits, tooManyLinks, allCaps, suspiciousTLD }\n  }\n}];"
+      },
+      "id": "validate",
+      "name": "Validate + Spam Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-valid",
+      "name": "IF: Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [660, 400]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "id", "value": "={{ $env.SHEETS_DOC_ID }}" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "DeadLetter" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "received_at": "={{ $json.received_at }}",
+            "name": "={{ $json.name }}",
+            "email": "={{ $json.email }}",
+            "company": "={{ $json.company }}",
+            "product": "={{ $json.product }}",
+            "urgency": "={{ $json.urgency }}",
+            "message": "={{ $json.message }}",
+            "error_reason": "={{ $json.errors.join('; ') }}",
+            "stage": "validation"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "deadletter-validation",
+      "name": "DeadLetter: Validation Failure",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [900, 580],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "GSHEETS_CRED", "name": "Google Sheets account" } }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"rejected\", \"errors\": $json.errors } }}",
+        "options": { "responseCode": 400 }
+      },
+      "id": "respond-400",
+      "name": "Respond 400 (Invalid)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1140, 580]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Enrich: use company if provided; else infer from email domain (skip public providers).\nconst PUBLIC_DOMAINS = new Set(['gmail.com','yahoo.com','outlook.com','hotmail.com','protonmail.com','icloud.com','aol.com','live.com']);\nconst lead = { ...$json };\nlet company = (lead.company || '').trim();\nlet source;\nif (company) {\n  source = 'provided';\n} else {\n  const domain = String(lead.email).split('@')[1] || '';\n  if (domain && !PUBLIC_DOMAINS.has(domain.toLowerCase())) {\n    const root = domain.split('.')[0];\n    company = root.charAt(0).toUpperCase() + root.slice(1);\n    source = 'inferred-from-email';\n  } else {\n    company = '(individual)';\n    source = 'public-domain-fallback';\n  }\n}\nlead.company = company;\nlead.company_source = source;\nreturn [{ json: lead }];"
+      },
+      "id": "enrich",
+      "name": "Enrich Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 280]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Idempotency key = sha256(lower(email) | product | UTC-date)[0:32].\n// A webhook replay on the same day collapses to one stored record.\nconst crypto = require('crypto');\nconst lead = { ...$json };\nconst today = new Date().toISOString().slice(0, 10);\nconst basis = `${String(lead.email).toLowerCase().trim()}|${String(lead.product).trim()}|${today}`;\nlead.idempotency_key = crypto.createHash('sha256').update(basis).digest('hex').slice(0, 32);\nlead.idempotency_basis = basis;\nreturn [{ json: lead }];"
+      },
+      "id": "idempotency",
+      "name": "Compute Idempotency Key",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1140, 280]
+    },
+    {
+      "parameters": {
+        "operation": "lookup",
+        "documentId": { "__rl": true, "mode": "id", "value": "={{ $env.SHEETS_DOC_ID }}" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "Leads" },
+        "filtersUI": {
+          "values": [
+            { "lookupColumn": "idempotency_key", "lookupValue": "={{ $json.idempotency_key }}" }
+          ]
+        },
+        "options": { "returnAllMatches": false }
+      },
+      "id": "lookup-existing",
+      "name": "Sheets: Lookup by Idempotency Key",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1380, 280],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "GSHEETS_CRED", "name": "Google Sheets account" } },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Merge lead with lookup result. Sheets 'lookup' returns the matched row (with row_number)\n// or nothing when there's no match.\nconst lead = $('Compute Idempotency Key').first().json;\nconst lookup = $input.all();\nconst found = lookup.length > 0 && lookup[0].json && lookup[0].json.idempotency_key;\nreturn [{\n  json: {\n    ...lead,\n    duplicate: Boolean(found),\n    existing_row_number: found ? (lookup[0].json.row_number ?? null) : null\n  }\n}];"
+      },
+      "id": "merge-lookup",
+      "name": "Merge Lookup Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 280]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.duplicate }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-duplicate",
+      "name": "IF: Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1860, 280]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"duplicate\", \"idempotency_key\": $json.idempotency_key, \"existing_row_number\": $json.existing_row_number } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "respond-duplicate",
+      "name": "Respond 200 (Duplicate)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2100, 140]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "id", "value": "={{ $env.SHEETS_DOC_ID }}" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "Leads" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $json.idempotency_key }}",
+            "received_at": "={{ $json.received_at }}",
+            "name": "={{ $json.name }}",
+            "email": "={{ $json.email }}",
+            "company": "={{ $json.company }}",
+            "company_source": "={{ $json.company_source }}",
+            "product": "={{ $json.product }}",
+            "urgency": "={{ $json.urgency }}",
+            "message": "={{ $json.message }}",
+            "status": "new"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "sheets-append-lead",
+      "name": "Sheets: Append Lead",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2100, 400],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "GSHEETS_CRED", "name": "Google Sheets account" } },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  { "leftValue": "={{ $json.urgency }}", "rightValue": "high", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "high"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2 },
+                "conditions": [
+                  { "leftValue": "={{ $json.urgency }}", "rightValue": "normal", "operator": { "type": "string", "operation": "equals" } }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "normal"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-urgency",
+      "name": "Switch: Urgency",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [2340, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "messageType": "block",
+        "blocksUi": "={{ JSON.stringify({ blocks: [ { type: 'header', text: { type: 'plain_text', text: '🚨 High-Urgency Lead', emoji: true } }, { type: 'section', fields: [ { type: 'mrkdwn', text: '*Name:*\\n' + $json.name }, { type: 'mrkdwn', text: '*Email:*\\n' + $json.email }, { type: 'mrkdwn', text: '*Company:*\\n' + $json.company + ' (' + $json.company_source + ')' }, { type: 'mrkdwn', text: '*Product:*\\n' + $json.product } ] }, { type: 'section', text: { type: 'mrkdwn', text: '*Message:*\\n' + $json.message } }, { type: 'context', elements: [ { type: 'mrkdwn', text: 'idempotency_key: `' + $json.idempotency_key + '`' } ] } ] }) }}",
+        "otherOptions": {}
+      },
+      "id": "slack-alert",
+      "name": "Slack: High-Urgency Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [2580, 280],
+      "credentials": { "slackApi": { "id": "SLACK_CRED", "name": "Slack account" } },
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "parameters": {
+        "name": "=[HIGH] {{ $json.product }} — {{ $json.name }} @ {{ $json.company }}",
+        "description": "=*Customer:* {{ $json.name }} ({{ $json.email }})\n*Company:* {{ $json.company }} ({{ $json.company_source }})\n*Product:* {{ $json.product }}\n*Urgency:* {{ $json.urgency }}\n*Received:* {{ $json.received_at }}\n\n*Message:*\n{{ $json.message }}\n\n---\nidempotency_key: {{ $json.idempotency_key }}",
+        "additionalFields": { "idListId": "={{ $env.TRELLO_LIST_ID }}" }
+      },
+      "id": "trello-create",
+      "name": "Trello: Create Card",
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [2820, 280],
+      "credentials": { "trelloApi": { "id": "TRELLO_CRED", "name": "Trello account" } },
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM_EMAIL }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "=We received your inquiry about {{ $json.product }}",
+        "emailFormat": "html",
+        "html": "=<p>Hi {{ $json.name }},</p>\n<p>Thanks for reaching out about <strong>{{ $json.product }}</strong>. We've logged your message and a team member will follow up within one business day.</p>\n<blockquote>{{ $json.message }}</blockquote>\n<p>Reference: <code>{{ $json.idempotency_key }}</code></p>\n<p>— opscopilot Support</p>",
+        "options": {}
+      },
+      "id": "smtp-confirm",
+      "name": "SMTP: Confirmation Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [2580, 520],
+      "credentials": { "smtp": { "id": "SMTP_CRED", "name": "SMTP account" } },
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": { "__rl": true, "mode": "id", "value": "={{ $env.SHEETS_DOC_ID }}" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "Leads" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $json.idempotency_key }}",
+            "status": "confirmed-emailed"
+          },
+          "matchingColumns": ["idempotency_key"],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "sheets-log-normal",
+      "name": "Sheets: Log Normal Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2820, 520],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "GSHEETS_CRED", "name": "Google Sheets account" } },
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"accepted\", \"urgency\": $('Merge Lookup Result').item.json.urgency, \"idempotency_key\": $('Merge Lookup Result').item.json.idempotency_key } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "respond-200",
+      "name": "Respond 200 (Accepted)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [3060, 400]
+    }
+  ],
+  "connections": {
+    "Webhook: Lead Intake": { "main": [[{ "node": "Validate + Spam Check", "type": "main", "index": 0 }]] },
+    "Validate + Spam Check": { "main": [[{ "node": "IF: Is Valid?", "type": "main", "index": 0 }]] },
+    "IF: Is Valid?": {
+      "main": [
+        [{ "node": "Enrich Lead", "type": "main", "index": 0 }],
+        [{ "node": "DeadLetter: Validation Failure", "type": "main", "index": 0 }]
+      ]
+    },
+    "DeadLetter: Validation Failure": { "main": [[{ "node": "Respond 400 (Invalid)", "type": "main", "index": 0 }]] },
+    "Enrich Lead": { "main": [[{ "node": "Compute Idempotency Key", "type": "main", "index": 0 }]] },
+    "Compute Idempotency Key": { "main": [[{ "node": "Sheets: Lookup by Idempotency Key", "type": "main", "index": 0 }]] },
+    "Sheets: Lookup by Idempotency Key": { "main": [[{ "node": "Merge Lookup Result", "type": "main", "index": 0 }]] },
+    "Merge Lookup Result": { "main": [[{ "node": "IF: Duplicate?", "type": "main", "index": 0 }]] },
+    "IF: Duplicate?": {
+      "main": [
+        [{ "node": "Respond 200 (Duplicate)", "type": "main", "index": 0 }],
+        [{ "node": "Sheets: Append Lead", "type": "main", "index": 0 }]
+      ]
+    },
+    "Sheets: Append Lead": { "main": [[{ "node": "Switch: Urgency", "type": "main", "index": 0 }]] },
+    "Switch: Urgency": {
+      "main": [
+        [{ "node": "Slack: High-Urgency Alert", "type": "main", "index": 0 }],
+        [{ "node": "SMTP: Confirmation Email", "type": "main", "index": 0 }]
+      ]
+    },
+    "Slack: High-Urgency Alert": { "main": [[{ "node": "Trello: Create Card", "type": "main", "index": 0 }]] },
+    "Trello: Create Card": { "main": [[{ "node": "Respond 200 (Accepted)", "type": "main", "index": 0 }]] },
+    "SMTP: Confirmation Email": { "main": [[{ "node": "Sheets: Log Normal Status", "type": "main", "index": 0 }]] },
+    "Sheets: Log Normal Status": { "main": [[{ "node": "Respond 200 (Accepted)", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "errorWorkflow": "opscopilot-error-handler"
+  },
+  "tags": [{ "name": "opscopilot" }, { "name": "leads" }]
+}

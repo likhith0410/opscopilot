@@ -1,0 +1,8 @@
+{
+  "name": "Broken Email",
+  "email": "not-an-email-address",
+  "company": "Typo Inc",
+  "message": "Hi, I would like a demo of your analytics product please.",
+  "urgency": "normal",
+  "product": "Analytics Suite"
+}

@@ -1,0 +1,80 @@
+{
+  "name": "opscopilot — Daily Lead Digest (6 PM)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 18 * * *" }
+          ]
+        }
+      },
+      "id": "cron-6pm",
+      "name": "Schedule: 18:00 Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 400]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "mode": "id", "value": "={{ $env.SHEETS_DOC_ID }}" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "Leads" },
+        "options": {}
+      },
+      "id": "sheets-read-all",
+      "name": "Sheets: Read All Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [440, 400],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "GSHEETS_CRED", "name": "Google Sheets account" } }
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Aggregate today's leads: count by urgency, count by product, top 5 most recent.\nconst rows = $input.all().map(i => i.json);\nconst today = new Date().toISOString().slice(0, 10);\n\nconst todays = rows.filter(r => String(r.received_at || '').slice(0, 10) === today);\n\nconst byUrgency = {};\nconst byProduct = {};\nfor (const r of todays) {\n  const u = String(r.urgency || 'unknown').toLowerCase();\n  byUrgency[u] = (byUrgency[u] || 0) + 1;\n  const p = String(r.product || 'unknown');\n  byProduct[p] = (byProduct[p] || 0) + 1;\n}\n\nconst top5 = [...todays]\n  .sort((a, b) => String(b.received_at).localeCompare(String(a.received_at)))\n  .slice(0, 5)\n  .map(r => ({ name: r.name, company: r.company, product: r.product, urgency: r.urgency, received_at: r.received_at }));\n\nreturn [{\n  json: {\n    date: today,\n    total_today: todays.length,\n    by_urgency: byUrgency,\n    by_product: byProduct,\n    top5_recent: top5\n  }\n}];"
+      },
+      "id": "aggregate",
+      "name": "Aggregate Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Format the digest into Slack Block Kit JSON.\nconst d = $json;\nconst urgencyLines = Object.entries(d.by_urgency).map(([k, v]) => `• ${k}: *${v}*`).join('\\n') || '_none_';\nconst productLines = Object.entries(d.by_product).map(([k, v]) => `• ${k}: *${v}*`).join('\\n') || '_none_';\nconst top5Lines = d.top5_recent.length\n  ? d.top5_recent.map((r, i) => `${i + 1}. *${r.name}* (${r.company}) — ${r.product} [${r.urgency}]`).join('\\n')\n  : '_no leads today_';\n\nconst blocks = [\n  { type: 'header', text: { type: 'plain_text', text: `📊 Daily Lead Digest — ${d.date}`, emoji: true } },\n  { type: 'section', text: { type: 'mrkdwn', text: `*Total leads today:* ${d.total_today}` } },\n  { type: 'section', fields: [\n    { type: 'mrkdwn', text: `*By urgency:*\\n${urgencyLines}` },\n    { type: 'mrkdwn', text: `*By product:*\\n${productLines}` }\n  ] },\n  { type: 'section', text: { type: 'mrkdwn', text: `*Top 5 recent:*\\n${top5Lines}` } }\n];\n\nreturn [{ json: { blocks_json: JSON.stringify({ blocks }) } }];"
+      },
+      "id": "format-digest",
+      "name": "Format Digest Blocks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "messageType": "block",
+        "blocksUi": "={{ $json.blocks_json }}",
+        "otherOptions": {}
+      },
+      "id": "slack-digest",
+      "name": "Slack: Post Digest",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [1160, 400],
+      "credentials": { "slackApi": { "id": "SLACK_CRED", "name": "Slack account" } },
+      "retryOnFail": true,
+      "maxTries": 3
+    }
+  ],
+  "connections": {
+    "Schedule: 18:00 Daily": { "main": [[{ "node": "Sheets: Read All Leads", "type": "main", "index": 0 }]] },
+    "Sheets: Read All Leads": { "main": [[{ "node": "Aggregate Digest", "type": "main", "index": 0 }]] },
+    "Aggregate Digest": { "main": [[{ "node": "Format Digest Blocks", "type": "main", "index": 0 }]] },
+    "Format Digest Blocks": { "main": [[{ "node": "Slack: Post Digest", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": [{ "name": "opscopilot" }, { "name": "digest" }]
+}

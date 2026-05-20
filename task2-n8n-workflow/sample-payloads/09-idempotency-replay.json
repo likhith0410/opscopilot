@@ -1,0 +1,8 @@
+{
+  "name": "Marcus Reed",
+  "email": "marcus.reed@globex.com",
+  "company": "Globex",
+  "message": "Send this exact payload 3 times to demonstrate idempotency — only one row should be stored in the Leads sheet.",
+  "urgency": "high",
+  "product": "Checkout API"
+}
